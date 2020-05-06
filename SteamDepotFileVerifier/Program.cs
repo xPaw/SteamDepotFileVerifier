@@ -17,29 +17,43 @@ namespace SteamDepotFileVerifier
             Console.WriteLine();
             Console.ResetColor();
 
-            if (args.Length == 0 || !uint.TryParse(args[0], out var appid))
-            {
-                Console.WriteLine("Provide appid as the first argument, for example: ./SteamDepotFileVerifier 730");
-                return 1;
-            }
-
-            Console.WriteLine($"AppID: {appid}");
-
             var steamClient = new SteamClientUtils();
             var steamLibraries = steamClient.GetLibraries();
 
-            Console.WriteLine($"Steam: {steamClient.SteamPath}");
+            Console.WriteLine($"Steam path: {steamClient.SteamPath}");
+            Console.WriteLine();
 
-            var appManifestPath = steamLibraries
-                .Select(library => Path.Join(library, $"appmanifest_{appid}.acf"))
-                .FirstOrDefault(File.Exists);
-
-            if (appManifestPath == null)
+            if (args.Length == 0 || !uint.TryParse(args[0], out var appid))
             {
-                throw new FileNotFoundException("Unable to find appmanifest anywhere.");
-            }
+                foreach (var library in steamLibraries)
+                {
+                    var manifests = Directory.GetFiles(library, "appmanifest_*.acf");
 
-            VerifyApp(steamClient, appManifestPath);
+                    foreach (var appManifestPath in manifests)
+                    {
+                        VerifyApp(steamClient, appManifestPath);
+
+                        Console.WriteLine();
+                        Console.WriteLine("------------------------------");
+                        Console.WriteLine();
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"AppID: {appid}");
+
+                var appManifestPath = steamLibraries
+                    .Select(library => Path.Join(library, $"appmanifest_{appid}.acf"))
+                    .FirstOrDefault(File.Exists);
+
+                if (appManifestPath == null)
+                {
+                    throw new FileNotFoundException("Unable to find appmanifest anywhere.");
+                }
+
+                VerifyApp(steamClient, appManifestPath);
+            }
 
             Console.WriteLine();
             Console.WriteLine("If some files are listed as unknown but shouldn't be, they are probably from the SDK.");
@@ -60,6 +74,8 @@ namespace SteamDepotFileVerifier
             {
                 throw new DirectoryNotFoundException($"Game not found: {gamePath}");
             }
+
+            Console.WriteLine($"Scanning {gamePath}");
 
             var allKnownDepotFiles = new Dictionary<string, ulong>();
 
@@ -109,7 +125,7 @@ namespace SteamDepotFileVerifier
 
                 if (allKnownDepotFiles[unprefixedPath] != (ulong)length)
                 {
-                    Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {length}, should be {allKnownDepotFiles[unprefixedPath]})");
+                    Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {length} bytes, should be {allKnownDepotFiles[unprefixedPath]})");
                     continue;
                 }
             }
