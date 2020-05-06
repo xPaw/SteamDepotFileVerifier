@@ -92,6 +92,11 @@ namespace SteamDepotFileVerifier
 
                 foreach (var file in manifest.Files)
                 {
+                    if (file.Flags.HasFlag(EDepotFileFlag.Directory))
+                    {
+                        continue;
+                    }
+
                     allKnownDepotFiles[file.FileName] = file.TotalSize;
                 }
 
