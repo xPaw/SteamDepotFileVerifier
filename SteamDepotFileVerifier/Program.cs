@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using Microsoft.Win32;
 using SteamKit2;
 
 namespace SteamDepotFileVerifier
@@ -25,34 +25,23 @@ namespace SteamDepotFileVerifier
 
             Console.WriteLine($"AppID: {appid}");
 
-            string steamLocation = null;
+            var steamClient = new SteamClientUtils();
+            var steamLibraries = steamClient.GetLibraries();
 
-            var key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Valve\\Steam") ??
-                      RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey("SOFTWARE\\Valve\\Steam");
+            Console.WriteLine($"Steam: {steamClient.SteamPath}");
 
-            if (key != null && key.GetValue("SteamPath") is string steamPath)
+            var appManifestPath = steamLibraries
+                .Select(library => Path.Join(library, $"appmanifest_{appid}.acf"))
+                .FirstOrDefault(File.Exists);
+
+            if (appManifestPath == null)
             {
-                steamLocation = steamPath;
+                throw new FileNotFoundException("Unable to find appmanifest anywhere.");
             }
 
-            if (steamLocation == null)
-            {
-                Console.Error.WriteLine("Can not find Steam");
-                return 1;
-            }
-
-            Console.WriteLine($"Steam: {steamLocation}");
-
-            var acf = Path.Join(steamLocation, "steamapps", $"appmanifest_{appid}.acf");
-
-            if (!File.Exists(acf))
-            {
-                throw new FileNotFoundException("App manifest not found", acf);
-            }
-
-            var kv = KeyValue.LoadAsText(acf);
+            var kv = KeyValue.LoadAsText(appManifestPath);
             var mountedDepots = kv["MountedDepots"];
-            var gamePath = Path.Join(steamLocation, "steamapps", "common", kv["installdir"].Value);
+            var gamePath = Path.Join(Path.GetDirectoryName(appManifestPath), "common", kv["installdir"].Value);
 
             if (!Directory.Exists(gamePath))
             {
@@ -63,7 +52,7 @@ namespace SteamDepotFileVerifier
 
             foreach (var mountedDepot in mountedDepots.Children)
             {
-                var manifestPath = Path.Join(steamLocation, "depotcache", $"{mountedDepot.Name}_{mountedDepot.Value}.manifest");
+                var manifestPath = Path.Join(steamClient.SteamPath, "depotcache", $"{mountedDepot.Name}_{mountedDepot.Value}.manifest");
 
                 if (!File.Exists(manifestPath))
                 {
