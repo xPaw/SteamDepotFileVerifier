@@ -39,6 +39,19 @@ namespace SteamDepotFileVerifier
                 throw new FileNotFoundException("Unable to find appmanifest anywhere.");
             }
 
+            VerifyApp(steamClient, appManifestPath);
+
+            Console.WriteLine();
+            Console.WriteLine("If some files are listed as unknown but shouldn't be, they are probably from the SDK.");
+            Console.WriteLine("After deleting files, verify the game files in Steam.");
+
+            return 0;
+        }
+
+        private static void VerifyApp(SteamClientUtils steamClient, string appManifestPath)
+        {
+            Console.WriteLine($"Parsing {appManifestPath}");
+
             var kv = KeyValue.LoadAsText(appManifestPath);
             var mountedDepots = kv["MountedDepots"];
             var gamePath = Path.Join(Path.GetDirectoryName(appManifestPath), "common", kv["installdir"].Value);
@@ -102,11 +115,6 @@ namespace SteamDepotFileVerifier
             }
 
             Console.ResetColor();
-            Console.WriteLine();
-            Console.WriteLine("If some files are listed as unknown but shouldn't be, they are probably from the SDK.");
-            Console.WriteLine("After deleting files, verify the game files in Steam.");
-
-            return 0;
         }
 
         private static DepotManifest DumbDepotManifestHack(byte[] data)
