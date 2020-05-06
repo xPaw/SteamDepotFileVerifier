@@ -105,9 +105,10 @@ namespace SteamDepotFileVerifier
 
             Console.WriteLine($"{allKnownDepotFiles.Count} files in depot manifests");
 
-            var filesOnDisk = Directory.GetFiles(gamePath, "*", SearchOption.AllDirectories);
+            var filesOnDisk = Directory.GetFiles(gamePath, "*", SearchOption.AllDirectories).ToList();
+            filesOnDisk.Sort();
 
-            Console.WriteLine($"{filesOnDisk.Length} files on disk");
+            Console.WriteLine($"{filesOnDisk.Count} files on disk");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
 
