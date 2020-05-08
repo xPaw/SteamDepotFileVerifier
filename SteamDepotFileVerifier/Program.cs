@@ -85,7 +85,8 @@ namespace SteamDepotFileVerifier
 
                 if (!File.Exists(manifestPath))
                 {
-                    throw new FileNotFoundException("Manifest not found", manifestPath);
+                    Console.Error.WriteLine($"Manifest does not exist: {manifestPath}");
+                    continue;
                 }
 
                 var manifest = DumbDepotManifestHack(File.ReadAllBytes(manifestPath));
