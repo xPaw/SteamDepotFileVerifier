@@ -112,9 +112,13 @@ namespace SteamDepotFileVerifier
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
 
+            var filenamesOnDisk = new HashSet<string>();
+            
             foreach (var file in filesOnDisk)
             {
                 var unprefixedPath = file.Substring(gamePath.Length + 1);
+
+                filenamesOnDisk.Add(unprefixedPath);
 
                 if (unprefixedPath == "installscript.vdf")
                 {
@@ -123,7 +127,7 @@ namespace SteamDepotFileVerifier
 
                 if (!allKnownDepotFiles.ContainsKey(unprefixedPath))
                 {
-                    Console.WriteLine("Unknown file: " + unprefixedPath);
+                    Console.WriteLine($"Unknown file: {unprefixedPath}");
                     continue;
                 }
 
@@ -134,6 +138,11 @@ namespace SteamDepotFileVerifier
                     Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {length} bytes, should be {allKnownDepotFiles[unprefixedPath]})");
                     continue;
                 }
+            }
+
+            foreach (var file in allKnownDepotFiles.Keys.Where(file => !filenamesOnDisk.Contains(file)))
+            {
+                Console.WriteLine($"Missing file: {file}");
             }
 
             Console.ResetColor();
