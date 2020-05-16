@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using SteamKit2;
 
 namespace SteamDepotFileVerifier
@@ -89,7 +88,7 @@ namespace SteamDepotFileVerifier
                     continue;
                 }
 
-                var manifest = DumbDepotManifestHack(File.ReadAllBytes(manifestPath));
+                var manifest = DepotManifest.Deserialize(File.ReadAllBytes(manifestPath));
 
                 foreach (var file in manifest.Files)
                 {
@@ -147,14 +146,6 @@ namespace SteamDepotFileVerifier
             }
 
             Console.ResetColor();
-        }
-
-        private static DepotManifest DumbDepotManifestHack(byte[] data)
-        {
-            var exampleType = typeof(DepotManifest);
-            var argTypes = new[] { typeof(byte[]) };
-            var ctor = exampleType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, argTypes, null);
-            return (DepotManifest)ctor.Invoke(new []{ data });
         }
     }
 }
