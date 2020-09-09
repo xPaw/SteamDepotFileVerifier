@@ -10,12 +10,6 @@ namespace SteamDepotFileVerifier
     {
         static int Main(string[] args)
         {
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine();
-            Console.WriteLine("[>] Follow https://twitter.com/thexpaw :)");
-            Console.WriteLine();
-            Console.ResetColor();
-
             var steamClient = new SteamClientUtils();
             var steamLibraries = steamClient.GetLibraries();
 
