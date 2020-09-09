@@ -60,7 +60,7 @@ namespace SteamDepotFileVerifier
             Console.WriteLine($"Parsing {appManifestPath}");
 
             var kv = KeyValue.LoadAsText(appManifestPath);
-            var mountedDepots = kv["MountedDepots"];
+            var depotManifests = new Dictionary<string, string>();
             var gamePath = Path.Join(Path.GetDirectoryName(appManifestPath), "common", kv["installdir"].Value);
 
             if (!Directory.Exists(gamePath))
@@ -70,16 +70,29 @@ namespace SteamDepotFileVerifier
 
             Console.WriteLine($"Scanning {gamePath}");
 
+            foreach (var mountedDepot in kv["MountedDepots"].Children)
+            {
+                depotManifests[mountedDepot.Name] = mountedDepot.Value;
+            }
+
+            foreach (var mountedDepot in kv["InstalledDepots"].Children)
+            {
+                depotManifests[mountedDepot.Name] = mountedDepot["manifest"].Value;
+            }
+
             var allKnownDepotFiles = new Dictionary<string, ulong>();
 
-            foreach (var mountedDepot in mountedDepots.Children)
+            foreach (var (depotId, manifestId) in depotManifests)
             {
-                var manifestPath = Path.Join(steamClient.SteamPath, "depotcache", $"{mountedDepot.Name}_{mountedDepot.Value}.manifest");
+                var manifestPath = Path.Join(steamClient.SteamPath, "depotcache", $"{depotId}_{manifestId}.manifest");
 
                 if (!File.Exists(manifestPath))
                 {
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.Error.WriteLine($"Manifest does not exist: {manifestPath}");
-                    continue;
+                    Console.Error.WriteLine($"Try verifying \"{kv["name"].Value}\" in Steam and running this again.");
+                    Console.ResetColor();
+                    return;
                 }
 
                 var manifest = DepotManifest.Deserialize(File.ReadAllBytes(manifestPath));
