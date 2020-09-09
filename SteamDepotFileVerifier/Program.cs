@@ -147,6 +147,8 @@ namespace SteamDepotFileVerifier
                 }
             }
 
+            Console.ForegroundColor = ConsoleColor.Blue;
+
             foreach (var file in allKnownDepotFiles.Keys.Where(file => !filenamesOnDisk.Contains(file)))
             {
                 Console.WriteLine($"Missing file: {file}");
