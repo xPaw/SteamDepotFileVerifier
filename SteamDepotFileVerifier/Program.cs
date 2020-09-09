@@ -127,7 +127,7 @@ namespace SteamDepotFileVerifier
 
                 filenamesOnDisk.Add(unprefixedPath);
 
-                if (unprefixedPath == "installscript.vdf")
+                if (unprefixedPath == "installscript.vdf" || Path.GetFileName(unprefixedPath) == "steam_appid.txt")
                 {
                     continue;
                 }
