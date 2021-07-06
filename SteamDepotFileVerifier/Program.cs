@@ -61,7 +61,7 @@ namespace SteamDepotFileVerifier
 
             var kv = KeyValue.LoadAsText(appManifestPath);
             var depotManifests = new Dictionary<string, string>();
-            var gamePath = Path.Join(Path.GetDirectoryName(appManifestPath), "common", kv["installdir"].Value);
+            var gamePath = Path.Join(Path.GetDirectoryName(appManifestPath), "common", kv["installdir"].Value) + Path.DirectorySeparatorChar;
 
             if (!Directory.Exists(gamePath))
             {
@@ -123,7 +123,7 @@ namespace SteamDepotFileVerifier
             
             foreach (var file in filesOnDisk)
             {
-                var unprefixedPath = file.Substring(gamePath.Length + 1);
+                var unprefixedPath = file[gamePath.Length..];
 
                 filenamesOnDisk.Add(unprefixedPath);
 
