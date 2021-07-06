@@ -80,7 +80,7 @@ namespace SteamDepotFileVerifier
                 depotManifests[mountedDepot.Name] = mountedDepot["manifest"].Value;
             }
 
-            var allKnownDepotFiles = new Dictionary<string, DepotManifest.FileData>();
+            var allKnownDepotFiles = new Dictionary<string, DepotManifest.FileData>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var (depotId, manifestId) in depotManifests)
             {
@@ -119,7 +119,7 @@ namespace SteamDepotFileVerifier
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
 
-            var filenamesOnDisk = new HashSet<string>();
+            var filenamesOnDisk = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             
             foreach (var file in filesOnDisk)
             {
