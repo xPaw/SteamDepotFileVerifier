@@ -80,7 +80,7 @@ namespace SteamDepotFileVerifier
                 depotManifests[mountedDepot.Name] = mountedDepot["manifest"].Value;
             }
 
-            var allKnownDepotFiles = new Dictionary<string, ulong>();
+            var allKnownDepotFiles = new Dictionary<string, DepotManifest.FileData>();
 
             foreach (var (depotId, manifestId) in depotManifests)
             {
@@ -104,7 +104,7 @@ namespace SteamDepotFileVerifier
                         continue;
                     }
 
-                    allKnownDepotFiles[file.FileName] = file.TotalSize;
+                    allKnownDepotFiles[file.FileName] = file;
                 }
 
                 Console.WriteLine($"{manifestPath} - {manifest.Files.Count} files");
@@ -132,17 +132,23 @@ namespace SteamDepotFileVerifier
                     continue;
                 }
 
-                if (!allKnownDepotFiles.ContainsKey(unprefixedPath))
+                if (!allKnownDepotFiles.TryGetValue(unprefixedPath, out var fileData))
                 {
                     Console.WriteLine($"Unknown file: {unprefixedPath}");
                     continue;
                 }
 
+                if ((fileData.Flags & (EDepotFileFlag.UserConfig | EDepotFileFlag.VersionedUserConfig)) > 0)
+                {
+                    Console.WriteLine($"Skipping user config: {unprefixedPath}");
+                    continue;
+                }
+
                 var length = new FileInfo(file).Length;
 
-                if (allKnownDepotFiles[unprefixedPath] != (ulong)length)
+                if (fileData.TotalSize != (ulong)length)
                 {
-                    Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {length} bytes, should be {allKnownDepotFiles[unprefixedPath]})");
+                    Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {length} bytes, should be {fileData.TotalSize})");
                     continue;
                 }
             }

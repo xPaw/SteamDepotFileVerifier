@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="SteamKit2" Version="2.4.0-Alpha.1" />
+    <PackageReference Include="SteamKit2" Version="2.4.0-Alpha.2" />
   </ItemGroup>
 
 </Project>
