@@ -97,6 +97,14 @@ namespace SteamDepotFileVerifier
 
                 var manifest = DepotManifest.Deserialize(File.ReadAllBytes(manifestPath));
 
+                if (manifest.FilenamesEncrypted)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.Error.WriteLine($"Manifest {manifestPath} has encrypted filenames.");
+                    Console.ResetColor();
+                    return;
+                }
+
                 foreach (var file in manifest.Files)
                 {
                     if (file.Flags.HasFlag(EDepotFileFlag.Directory))
@@ -120,7 +128,7 @@ namespace SteamDepotFileVerifier
             Console.ForegroundColor = ConsoleColor.Red;
 
             var filenamesOnDisk = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            
+
             foreach (var file in filesOnDisk)
             {
                 var unprefixedPath = file[gamePath.Length..];
