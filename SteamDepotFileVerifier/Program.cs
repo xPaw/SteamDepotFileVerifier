@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using SteamKit2;
 
 namespace SteamDepotFileVerifier
 {
     public static class SteamDepotFileVerifierProgram
     {
-        static int Main(string[] args)
+        const bool VERIFY_HASHES = false; // Change to true to SHA1 hash every single file
+
+        static async Task<int> Main(string[] args)
         {
             var steamClient = new SteamClientUtils();
             var steamLibraries = steamClient.GetLibraries();
@@ -24,7 +28,7 @@ namespace SteamDepotFileVerifier
 
                     foreach (var appManifestPath in manifests)
                     {
-                        VerifyApp(steamClient, appManifestPath);
+                        await VerifyApp(steamClient, appManifestPath);
 
                         Console.WriteLine();
                         Console.WriteLine("------------------------------");
@@ -45,7 +49,7 @@ namespace SteamDepotFileVerifier
                     throw new FileNotFoundException("Unable to find appmanifest anywhere.");
                 }
 
-                VerifyApp(steamClient, appManifestPath);
+                await VerifyApp(steamClient, appManifestPath);
             }
 
             Console.WriteLine();
@@ -55,7 +59,7 @@ namespace SteamDepotFileVerifier
             return 0;
         }
 
-        private static void VerifyApp(SteamClientUtils steamClient, string appManifestPath)
+        private static async Task VerifyApp(SteamClientUtils steamClient, string appManifestPath)
         {
             Console.WriteLine($"Parsing {appManifestPath}");
 
@@ -152,12 +156,26 @@ namespace SteamDepotFileVerifier
                     continue;
                 }
 
-                var length = new FileInfo(file).Length;
+                var fileInfoOnDisk = new FileInfo(file);
 
-                if (fileData.TotalSize != (ulong)length)
+                if (fileData.TotalSize != (ulong)fileInfoOnDisk.Length)
                 {
-                    Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {length} bytes, should be {fileData.TotalSize})");
+                    Console.WriteLine($"Mismatching file size: {unprefixedPath} (is {fileInfoOnDisk.Length} bytes, should be {fileData.TotalSize})");
                     continue;
+                }
+
+                // Verify hash of the file on disk
+                if (VERIFY_HASHES)
+                {
+                    await using var fs = fileInfoOnDisk.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+                    using var sha = SHA1.Create();
+                    var fileOnDiskChecksum = await sha.ComputeHashAsync(fs);
+
+                    if (!fileData.FileHash.SequenceEqual(fileOnDiskChecksum))
+                    {
+                        Console.WriteLine($"Mismatching file hash: {unprefixedPath}");
+                        continue;
+                    }
                 }
             }
 
